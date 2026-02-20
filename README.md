@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AutoReport AI - Dynamic Edition 🚀
 
-## Getting Started
+AutoReport AI is a production-grade, full-stack project analyzer designed to synthesize deep architectural intelligence from raw codebases. Upload any ZIP file, and let the AI instantly generate university-standard academic reports, Mermaid diagrams, and deployment strategies.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Framer Motion](https://img.shields.io/badge/Framer--Motion-6366F1?style=for-the-badge&logo=framer)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Core Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **📂 Deep Project Analysis**: Analyzes file structures, `package.json`, and core code snippets to deduce frameworks, logic flow, and system architecture.
+- **⚡ Live Streaming Reports**: Experience real-time report generation using heavy streaming protocols (Vercel AI SDK style).
+- **📊 Interactive Architecture Diagrams**: Native rendering of Mermaid.js diagrams to visualize your project structure instantly.
+- **📚 Local Report Library**: Persistent storage for your past reports with full load, delete, and clear-all functionality.
+- **🎓 University Formats**: Specialized templates for **Bangalore University (BCA)**, **VTU**, and Generic Software Architecture reports.
+- **📄 Pro Export Options**: Export your synthesized intelligence directly to **PDF** (University Layout) or **DOCX** (.docx) with one click.
+- **🤖 Multi-LLM Support**: Built-in support for **Google Gemini 2.0 Pro** and **OpenRouter** (GPT-4o, Claude 3, etc.).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- Node.js 18.x or higher
+- Gemini API Key and/or OpenRouter API Key
 
-To learn more about Next.js, take a look at the following resources:
+### Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the repository**:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   git clone https://github.com/Sathvik-Nagesh/AutoReport-Ai.git
+   cd AutoReport-Ai/autoreport-app
+   ```
 
-## Deploy on Vercel
+2. **Install dependencies**:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Configure Environment Variables**:
+   Create a `.env.local` file in the root directory:
+
+   ```env
+   GEMINI_API_KEY=your_gemini_key
+   OPENROUTER_API_KEY=your_openrouter_key
+   VERCEL_URL=localhost:3000
+   ```
+
+4. **Run the Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to see the application.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router + Turbopack)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Markdown**: [React Markdown](https://github.com/remarkjs/react-markdown)
+- **Diagrams**: [Mermaid.js](https://mermaid.js.org/)
+- **PDF Export**: [html2pdf.js](https://github.com/eKoopmans/html2pdf.js)
+- **Word Export**: [docx](https://docx.js.org/)
+
+## 📜 Academic Formats
+
+- **Bangalore University BCA**: Strictly follows the standard synopsis format (Existing System, Proposed System, Objective, etc.).
+- **VTU**: Follows the technical report layout (Literature Survey, Methodology, Implementation).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+Built with ❤️ by [Sathvik Nagesh](https://github.com/Sathvik-Nagesh)
