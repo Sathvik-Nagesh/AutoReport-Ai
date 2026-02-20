@@ -2,7 +2,7 @@
 
 import { ProjectAnalysis } from '../lib/types';
 import { motion } from 'framer-motion';
-import { Cpu, Server, Database, Layers, CheckCircle2, Bot } from 'lucide-react';
+import { Cpu, Server, Database, Layers, CheckCircle2, Bot, MessageSquare, Code2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
 import { ReportGenerationSettings } from '../lib/types';
@@ -159,6 +159,20 @@ export default function AnalysisDashboard({
               </div>
           </div>
           )}
+
+          <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-3xl backdrop-blur-xl">
+              <div className="flex items-center gap-3 mb-4">
+                 <Code2 className="text-indigo-400 w-6 h-6" />
+                 <h3 className="text-xl font-semibold text-slate-100">Live Mermaid Editor</h3>
+              </div>
+              <p className="text-sm text-slate-400 mb-4">The AI generated this architecture diagram. Tweak the Mermaid syntax before report synthesis if needed.</p>
+              <textarea 
+                  value={data.architectureDiagram || ''}
+                  onChange={(e) => setData({...data, architectureDiagram: e.target.value})}
+                  className="w-full bg-black/60 border border-slate-800 rounded-xl p-4 text-emerald-400 font-mono text-[13px] outline-none focus:border-indigo-500/50 min-h-[160px] custom-scrollbar"
+                  spellCheck={false}
+              />
+          </div>
       </div>
 
       {/* Right Column - File Tree & Action */}
@@ -236,6 +250,17 @@ export default function AnalysisDashboard({
                              <option value="VTU">VTU Layout</option>
                              <option value="Generic">Generic Architecture</option>
                          </select>
+                     </div>
+                     <div className="flex flex-col pt-4 border-t border-slate-800 mt-4">
+                         <label className="text-slate-400 text-xs uppercase font-medium flex items-center gap-1.5 mb-2">
+                             <MessageSquare className="w-3.5 h-3.5 text-fuchsia-400" /> Prompt Refiner
+                         </label>
+                         <textarea 
+                             value={settings.customPrompt || ''}
+                             onChange={(e) => setSettings({...settings, customPrompt: e.target.value})}
+                             placeholder="E.g., Focus heavily on security implementation, mention AWS S3 specifically..."
+                             className="w-full bg-black/40 border border-slate-700/50 rounded-xl p-3 outline-none focus:border-indigo-500 text-sm min-h-[90px] text-slate-200 placeholder:text-slate-600 resize-y"
+                         />
                      </div>
                  </div>
             </div>

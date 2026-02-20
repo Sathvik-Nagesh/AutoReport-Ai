@@ -76,6 +76,7 @@ ${requestData.architectureDiagram || "graph TD\\n A[Entity] --> B[System]"}
 \`\`\`
 - You MUST include a "Deployment & Hosting" subsection describing the JSON Deployment recommendations.
 - Base the writing strictly on the provided JSON analysis of the project's codebase below.
+${settings.customPrompt ? `\n--- USER REFINEMENT PROMPT ---\n${settings.customPrompt}\n------------------------------` : ''}
 
 Project Analysis JSON:
 ${JSON.stringify(requestData, null, 2)}
@@ -107,9 +108,9 @@ ${JSON.stringify(requestData, null, 2)}
                 for await (const chunk of responseStream) {
                     await writer.write(encoder.encode(chunk.text));
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Gemini stream error", err);
-                await writer.write(encoder.encode(`\n\n[Streaming Error]: ${err.message}`));
+                await writer.write(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
             } finally {
                 await writer.close();
             }
