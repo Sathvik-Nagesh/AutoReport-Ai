@@ -8,25 +8,49 @@ import { saveAs } from 'file-saver';
 import ReactMarkdown from 'react-markdown';
 import mermaid from 'mermaid';
 
-const MermaidRender = ({ code }: { code: string }) => {
+const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: boolean }) => {
   const [svg, setSvg] = useState('');
+  const [hasError, setHasError] = useState(false);
   
   useEffect(() => {
+    // Save expensive mermaid parsing until streaming is done to prevent syntax corruption errors
+    if (isGenerating) return;
+
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
     const renderDiagram = async () => {
       try {
+        setHasError(false);
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg } = await mermaid.render(id, code);
         setSvg(svg);
       } catch (err) {
         console.error("Mermaid Render failed", err);
+        setHasError(true);
       }
     };
-    renderDiagram();
-  }, [code]);
+    if (code) {
+       renderDiagram();
+    }
+  }, [code, isGenerating]);
+
+  if (isGenerating || hasError || !svg) {
+      return (
+          <div className="my-8 p-4 bg-slate-900 border border-slate-700 rounded-xl overflow-x-auto">
+              <div className="flex items-center gap-2 mb-3">
+                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-xs font-medium text-slate-400">
+                    {isGenerating ? "Synthesizing Architecture Diagram..." : "Architecture Diagram (Raw Syntax)"}
+                 </span>
+              </div>
+              <pre className="text-emerald-400 font-mono text-sm leading-relaxed">
+                  {code}
+              </pre>
+          </div>
+      );
+  }
 
   return (
-    <div className="flex justify-center my-8 p-4 bg-white rounded-xl shadow-inner overflow-x-auto text-slate-800" dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="flex justify-center my-8 p-6 bg-white rounded-xl shadow-inner overflow-x-auto text-slate-800 border border-slate-200" dangerouslySetInnerHTML={{ __html: svg }} />
   );
 };
 
@@ -50,20 +74,24 @@ export default function ReportPreview({ report, onReset, isGenerating }: { repor
      if (isGenerating) setAutoScroll(true);
   }, [isGenerating]);
 
-  // Handle scrolling to bottom if autoScroll is enabled
+  // Handle scrolling to bottom if autoScroll is enabled (using window scroll now)
   useEffect(() => {
-     if (isGenerating && autoScroll && scrollContainerRef.current) {
-         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+     if (isGenerating && autoScroll) {
+         window.scrollTo({
+             top: document.body.scrollHeight,
+             behavior: 'smooth'
+         });
      }
   }, [content, isGenerating, autoScroll]);
 
-  const handleScroll = () => {
-     if (!scrollContainerRef.current) return;
-     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-     // If user scrolls up voluntarily, diff becomes > 100, autoScroll disables.
-     const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-     setAutoScroll(isAtBottom);
-  };
+  useEffect(() => {
+     const handleWindowScroll = () => {
+        const isAtBottom = document.body.scrollHeight - window.scrollY - window.innerHeight < 100;
+        setAutoScroll(isAtBottom);
+     };
+     window.addEventListener('scroll', handleWindowScroll);
+     return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
@@ -195,8 +223,7 @@ export default function ReportPreview({ report, onReset, isGenerating }: { repor
 
         <div 
            ref={scrollContainerRef}
-           onScroll={handleScroll}
-           className="p-6 md:p-10 max-h-[70vh] overflow-y-auto custom-scrollbar bg-slate-50 group relative"
+           className="p-6 md:p-10 bg-slate-50 group relative rounded-b-3xl"
         >
              {isEditing ? (
                  <textarea 
@@ -212,7 +239,7 @@ export default function ReportPreview({ report, onReset, isGenerating }: { repor
                                code({inline, className, children, ...props}: React.HTMLProps<HTMLElement> & { inline?: boolean }) {
                                   const match = /language-(\w+)/.exec(className || '');
                                   if (!inline && match && match[1] === 'mermaid') {
-                                    return <MermaidRender code={String(children).replace(/\n$/, '')} />;
+                                    return <MermaidRender code={String(children).replace(/\n$/, '')} isGenerating={isGenerating} />;
                                   }
                                   return <code className={className} {...props}>{children}</code>;
                                }
