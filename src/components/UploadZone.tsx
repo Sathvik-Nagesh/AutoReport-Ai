@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { UploadCloud, FileArchive, Loader2 } from 'lucide-react';
 import { ProjectAnalysis } from '../lib/types';
 import { ProjectAnalyzer } from '../lib/analyzer/ProjectAnalyzer';
@@ -20,6 +20,31 @@ export default function UploadZone({
   const [isHovering, setIsHovering] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorState, setErrorState] = useState<string | null>(null);
+  const [loadingText, setLoadingText] = useState("Analyzing Project Anatomy...");
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isAnalyzing) {
+      const phrases = [
+        "Analyzing Project Anatomy...",
+        "Taking apart code...",
+        "Reading spaghetti code...",
+        "Extracting architectural DNA...",
+        "Hacking into NASA... (just kidding)",
+        "Decrypting file structure...",
+        "Bypassing mainframe authentication...",
+        "Synthesizing intelligence object..."
+      ];
+      let i = 0;
+      interval = setInterval(() => {
+        i = (i + 1) % phrases.length;
+        setLoadingText(phrases[i]);
+      }, 1500);
+    } else {
+      setLoadingText("Analyzing Project Anatomy...");
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -46,7 +71,7 @@ export default function UploadZone({
       try {
           const analysis = await ProjectAnalyzer.analyzeTarget(file, selectedModel);
           // artificial delay for visual effect
-          await new Promise(resolve => setTimeout(resolve, 800));
+          await new Promise(resolve => setTimeout(resolve, 4000));
           onAnalysisComplete(analysis);
       } catch (error: unknown) {
           console.error("Analysis failed:", error);
@@ -111,7 +136,15 @@ export default function UploadZone({
                     className="flex flex-col items-center"
                  >
                      <Loader2 className="w-12 h-12 text-indigo-400 animate-spin mb-4" />
-                     <p className="text-xl font-medium text-slate-200">Analyzing Project Anatomy...</p>
+                     <motion.p 
+                        key={loadingText}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="text-xl font-medium text-slate-200 text-center"
+                     >
+                        {loadingText}
+                     </motion.p>
                      <p className="text-sm text-slate-400 mt-2">Extracting architecture and building intelligence object</p>
                  </motion.div>
               ) : (

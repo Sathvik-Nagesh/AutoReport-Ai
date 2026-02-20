@@ -4,7 +4,7 @@ import { ProjectAnalysis } from '../lib/types';
 import { motion } from 'framer-motion';
 import { Cpu, Server, Database, Layers, CheckCircle2, Bot, MessageSquare, Code2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ReportGenerationSettings } from '../lib/types';
 
 export default function AnalysisDashboard({
@@ -23,6 +23,30 @@ export default function AnalysisDashboard({
       tone: 'formal',
       universityFormat: 'Bangalore University BCA'
   });
+  const [loadingText, setLoadingText] = useState("Synthesizing Report...");
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isGenerating) {
+      const phrases = [
+        "Synthesizing Report...",
+        "Translating spaghetti to formal English...",
+        "Reticulating splines...",
+        "Formatting document layout...",
+        "Hacking mainframe to bypass word count...",
+        "Drafting architecture diagrams...",
+        "Making it look like you worked for weeks..."
+      ];
+      let i = 0;
+      interval = setInterval(() => {
+        i = (i + 1) % phrases.length;
+        setLoadingText(phrases[i]);
+      }, 1500);
+    } else {
+      setLoadingText("Synthesizing Report...");
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -200,7 +224,14 @@ export default function AnalysisDashboard({
                      {isGenerating ? (
                          <>
                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                           Synthesizing Report...
+                           <motion.span 
+                               key={loadingText}
+                               initial={{ opacity: 0, y: 5 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               className="inline-block"
+                           >
+                               {loadingText}
+                           </motion.span>
                          </>
                      ) : (
                          <>
