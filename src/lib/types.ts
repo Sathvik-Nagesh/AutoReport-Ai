@@ -20,7 +20,7 @@ export interface ProjectAnalysis {
 }
 
 export interface ReportGenerationSettings {
-  verbosity: 'short' | 'medium' | 'long';
+  verbosity: 'short' | 'medium' | 'long' | 'exhaustive';
   tone: 'formal' | 'conversational';
   universityFormat: 'Bangalore University BCA' | 'VTU' | 'Generic';
   customPrompt?: string;

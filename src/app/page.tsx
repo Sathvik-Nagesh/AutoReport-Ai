@@ -119,11 +119,28 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-slate-50 font-sans selection:bg-indigo-500/30">
+    <main className="min-h-screen bg-transparent text-slate-50 font-sans selection:bg-indigo-500/30 overflow-hidden relative">
       {/* Background Gradient Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-fuchsia-900/20 blur-[120px]" />
+      <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+        <motion.div 
+            animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.5, 0.3],
+                rotate: [0, 90, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/40 blur-[150px]" 
+        />
+        <motion.div 
+            animate={{ 
+                scale: [1, 1.3, 1],
+                opacity: [0.2, 0.4, 0.2],
+                rotate: [0, -90, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-fuchsia-900/30 blur-[150px]" 
+        />
+        <div className="absolute top-[20%] right-[20%] w-[20%] h-[20%] rounded-full bg-emerald-900/20 blur-[120px]" />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
@@ -185,7 +202,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-4 shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)]"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6 shadow-[0_0_30px_-5px_rgba(99,102,241,0.4)] backdrop-blur-md"
           >
             <Sparkles className="w-4 h-4" />
             <span>Dynamic Edition Generator</span>

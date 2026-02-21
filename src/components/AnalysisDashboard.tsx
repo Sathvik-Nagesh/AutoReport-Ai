@@ -251,12 +251,13 @@ export default function AnalysisDashboard({
                          <label className="text-slate-400 text-xs uppercase font-medium">Verbosity</label>
                          <select 
                              value={settings.verbosity}
-                             onChange={(e) => setSettings({...settings, verbosity: e.target.value as 'short' | 'medium' | 'long'})}
+                             onChange={(e) => setSettings({...settings, verbosity: e.target.value as 'short' | 'medium' | 'long' | 'exhaustive'})}
                              className="mt-1 w-full bg-slate-900 border border-slate-700/50 rounded-xl p-2.5 outline-none focus:border-indigo-500"
                          >
                              <option value="short">Short & Punchy</option>
                              <option value="medium">Medium Length</option>
                              <option value="long">Deep & Extensive</option>
+                             <option value="exhaustive">Exhaustive (Thesis Level)</option>
                          </select>
                      </div>
                      <div>

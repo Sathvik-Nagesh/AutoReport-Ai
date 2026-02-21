@@ -12,8 +12,30 @@
 }
 
 body {
-  background-color: #000;
+  background-color: #030712;
   color: #fff;
+  background-image:
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(79, 70, 229, 0.15) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 85% 30%,
+      rgba(217, 70, 239, 0.15) 0%,
+      transparent 60%
+    );
+  background-attachment: fixed;
+  animation: pulse-bg 15s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-bg {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
 }
 
 ::selection {

@@ -19,8 +19,9 @@ export async function POST(req: Request) {
 
     let lengthInstruction = '';
     if (settings.verbosity === 'short') lengthInstruction = 'Make the responses highly concise and brief. 1 to 2 paragraphs maximum per section.';
-    else if (settings.verbosity === 'long') lengthInstruction = 'Make the responses heavily detailed, expanded, and extensive. Write at least 4 to 6 long paragraphs per section.';
-    else lengthInstruction = '3 to 6 paragraphs per section.';
+    else if (settings.verbosity === 'long') lengthInstruction = 'Make the responses extraordinarily comprehensive and extensive. Write at least 6 to 8 lengthy paragraphs per section, exploring every minute architectural detail and theoretical aspect without summarizing.';
+    else if (settings.verbosity === 'exhaustive') lengthInstruction = 'Provide a massive, thesis-level exhaustive analysis. Each section MUST BE at least 1500 words. Leave no detail untouched. Over-explain architectures, provide theoretical backgrounds, write extensive paragraphs, and break down the JSON deeply.';
+    else lengthInstruction = 'Write a detailed and thorough response, aiming for 4 to 5 substantial paragraphs per section.';
 
     let toneInstruction = '';
     if (settings.tone === 'conversational') toneInstruction = 'Use a conversational, slightly casual, and highly accessible tone.';
