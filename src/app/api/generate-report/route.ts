@@ -1,5 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
+
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 import { AI_CONFIG } from '../../../config/ai';
 
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
@@ -87,65 +90,60 @@ ${JSON.stringify(requestData, null, 2)}
     const modelConfig = AI_CONFIG.availableModels.find(m => m.id === targetModelId);
 
     const encoder = new TextEncoder();
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
 
     if (!modelConfig || modelConfig.provider === 'gemini') {
         if (!geminiApiKey || !ai) {
-             writer.write(encoder.encode("Error: Gemini API key is not configured."));
-             writer.close();
-             return new Response(stream.readable);
+             return new Response("Error: Gemini API key is not configured.", { status: 400 });
         }
         
-        // Background stream processing
-        (async () => {
-            try {
-                const responseStream = await ai!.models.generateContentStream({
-                    model: (!modelConfig) ? targetModelId : AI_CONFIG.geminiDirect.model,
-                    contents: prompt,
-                    config: { temperature: AI_CONFIG.temperature }
-                });
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    const responseStream = await ai!.models.generateContentStream({
+                        model: (!modelConfig) ? targetModelId : AI_CONFIG.geminiDirect.model,
+                        contents: prompt,
+                        config: { temperature: AI_CONFIG.temperature }
+                    });
 
-                for await (const chunk of responseStream) {
-                    await writer.write(encoder.encode(chunk.text));
+                    for await (const chunk of responseStream) {
+                        controller.enqueue(encoder.encode(chunk.text));
+                    }
+                } catch (err: unknown) {
+                    console.error("Gemini stream error", err);
+                    controller.enqueue(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
+                } finally {
+                    controller.close();
                 }
-            } catch (err: unknown) {
-                console.error("Gemini stream error", err);
-                await writer.write(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
-            } finally {
-                await writer.close();
             }
-        })();
+        });
 
-        return new Response(stream.readable, {
+        return new Response(stream, {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
     } 
     else if (modelConfig.provider === 'openrouter') {
         if (!openrouterApiKey) {
-            writer.write(encoder.encode("Error: OpenRouter API key is not configured."));
-            writer.close();
-            return new Response(stream.readable);
+            return new Response("Error: OpenRouter API key is not configured.", { status: 400 });
         }
 
-        // Background stream processing
-        (async () => {
-            try {
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${openrouterApiKey}`,
-                        "HTTP-Referer": process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000",
-                        "X-Title": "AutoReport AI",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: targetModelId,
-                        temperature: AI_CONFIG.temperature,
-                        stream: true,
-                        messages: [ { role: "user", content: prompt } ]
-                    })
-                });
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${openrouterApiKey}`,
+                            "HTTP-Referer": process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000",
+                            "X-Title": "AutoReport AI",
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: targetModelId,
+                            temperature: AI_CONFIG.temperature,
+                            stream: true,
+                            messages: [ { role: "user", content: prompt } ]
+                        })
+                    });
 
                 if (!response.ok) {
                     throw new Error(`OpenRouter API responded with status: ${response.status}`);
@@ -168,7 +166,7 @@ ${JSON.stringify(requestData, null, 2)}
                             try {
                                 const data = JSON.parse(line.substring(6));
                                 if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                                    await writer.write(encoder.encode(data.choices[0].delta.content));
+                                    controller.enqueue(encoder.encode(data.choices[0].delta.content));
                                 }
                             } catch (e) {
                                 // Ignore broken JSON stream chunks
@@ -177,14 +175,15 @@ ${JSON.stringify(requestData, null, 2)}
                     }
                 }
             } catch (err: unknown) {
-            console.error("OpenRouter stream error", err);
-            await writer.write(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
-        } finally {
-                await writer.close();
+                console.error("OpenRouter stream error", err);
+                controller.enqueue(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
+            } finally {
+                controller.close();
             }
-        })();
+        }
+        });
 
-        return new Response(stream.readable, {
+        return new Response(stream, {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
     }

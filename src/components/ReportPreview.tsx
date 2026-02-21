@@ -9,7 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import mermaid from 'mermaid';
 
 const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: boolean }) => {
-  const [svg, setSvg] = useState('');
+  const [imgSrc, setImgSrc] = useState('');
   const [hasError, setHasError] = useState(false);
   
   useEffect(() => {
@@ -22,7 +22,8 @@ const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: bo
         setHasError(false);
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg } = await mermaid.render(id, code);
-        setSvg(svg);
+        const base64 = btoa(unescape(encodeURIComponent(svg)));
+        setImgSrc(`data:image/svg+xml;base64,${base64}`);
       } catch (err) {
         console.error("Mermaid Render failed", err);
         setHasError(true);
@@ -33,7 +34,7 @@ const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: bo
     }
   }, [code, isGenerating]);
 
-  if (isGenerating || hasError || !svg) {
+  if (isGenerating || hasError || !imgSrc) {
       return (
           <div className="my-8 p-4 bg-slate-900 border border-slate-700 rounded-xl overflow-x-auto">
               <div className="flex items-center gap-2 mb-3">
@@ -50,7 +51,9 @@ const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: bo
   }
 
   return (
-    <div className="flex justify-center my-8 p-6 bg-white rounded-xl shadow-inner overflow-x-auto text-slate-800 border border-slate-200" dangerouslySetInnerHTML={{ __html: svg }} />
+    <div className="flex justify-center my-8 p-6 bg-white rounded-xl shadow-inner overflow-x-auto text-slate-800 border border-slate-200">
+        <img src={imgSrc} alt="Architecture Flowchart" className="max-w-full" style={{ minWidth: '400px' }} />
+    </div>
   );
 };
 
