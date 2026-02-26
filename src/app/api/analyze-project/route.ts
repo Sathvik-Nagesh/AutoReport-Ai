@@ -3,8 +3,6 @@ import { AI_CONFIG } from '../../../config/ai';
 import { GoogleGenAI } from '@google/genai';
 
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const openrouterApiKey = process.env.OPENROUTER_API_KEY || '';
-
 let ai: GoogleGenAI | null = null;
 if (geminiApiKey) {
     ai = new GoogleGenAI({ apiKey: geminiApiKey });
@@ -66,68 +64,18 @@ ${analysisRequest.coreSnippets || "No architectural snippets found"}
     const selectedModel = analysisRequest.modelId || AI_CONFIG.defaultModelId;
     const modelConfig = AI_CONFIG.availableModels.find(m => m.id === selectedModel);
 
-    if (modelConfig && modelConfig.provider === 'openrouter') {
-        if (!openrouterApiKey) {
-            return NextResponse.json({ error: 'OpenRouter API key is not configured.' }, { status: 500 });
-        }
-
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${openrouterApiKey}`,
-                "HTTP-Referer": process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000",
-                "X-Title": "AutoReport AI",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: selectedModel,
-                temperature: 0.1, // very low for strictly adhering to JSON output
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: userPrompt }
-                ]
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('OpenRouter Failure Payload:', errorText);
-            
-            let parsedError = "Unknown OpenRouter Error";
-            try {
-               const errorObj = JSON.parse(errorText);
-               parsedError = errorObj.error?.message || errorText;
-            } catch(e) {
-               // Ignore
-            }
-
-            throw new Error(`${parsedError}`);
-        }
-
-        const responseData = await response.json();
-        
-        if (responseData.error) {
-             console.error("OpenRouter Response Error Output:", responseData.error);
-             throw new Error("OpenRouter explicitly returned an error");
-        }
-        
-        aiOutput = responseData.choices?.[0]?.message?.content || '';
-        console.log("AI Generation successful payload received.");
-    } else {
-        if (!geminiApiKey || !ai) {
-            return NextResponse.json({ error: 'Gemini API key is not configured.' }, { status: 500 });
-        }
-        
-        const response = await ai.models.generateContent({
-            model: AI_CONFIG.geminiDirect.model,
-            contents: systemPrompt + '\n\n' + userPrompt,
-            config: {
-                temperature: 0.1, 
-                // native gemini json mode config could be structured, but prompt enforces it anyways
-            }
-        });
-        aiOutput = response.text || '';
+    if (!geminiApiKey || !ai) {
+        return NextResponse.json({ error: 'Gemini API key is not configured.' }, { status: 500 });
     }
+    
+    const response = await ai.models.generateContent({
+        model: (!modelConfig || modelConfig.provider !== 'gemini') ? AI_CONFIG.geminiDirect.model : selectedModel,
+        contents: systemPrompt + '\n\n' + userPrompt,
+        config: {
+            temperature: 0.1, 
+        }
+    });
+    aiOutput = response.text || '';
 
     // Attempt to clean any potential markdown fences out of paranoia just in case the AI messed up
     if (aiOutput.includes('```json')) {

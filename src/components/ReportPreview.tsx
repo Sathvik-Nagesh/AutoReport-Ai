@@ -22,7 +22,8 @@ const MermaidRender = ({ code, isGenerating }: { code: string, isGenerating?: bo
         setHasError(false);
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg } = await mermaid.render(id, code);
-        const base64 = btoa(unescape(encodeURIComponent(svg)));
+        // Safely encode SVG to base64 robustly
+        const base64 = btoa(encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(Number('0x' + p1))));
         setImgSrc(`data:image/svg+xml;base64,${base64}`);
       } catch (err) {
         console.error("Mermaid Render failed", err);
@@ -235,8 +236,8 @@ export default function ReportPreview({ report, onReset, isGenerating }: { repor
                     className="w-full min-h-[500px] bg-transparent text-slate-900 border-none outline-none font-mono text-sm leading-relaxed resize-y"
                  />
              ) : (
-                 <div ref={pdfRef} className="p-4 bg-white text-black min-h-screen">
-                     <article className="prose prose-slate prose-lg max-w-none prose-h1:text-indigo-900 prose-h2:text-indigo-800 prose-p:text-slate-800 prose-headings:font-bold font-serif prose-p:leading-relaxed prose-li:text-slate-800">
+                 <div ref={pdfRef} className="px-8 py-10 bg-white text-black min-h-screen">
+                     <article className="prose prose-slate prose-lg max-w-none prose-headings:text-indigo-900 prose-h1:text-4xl prose-h1:border-b prose-h1:border-indigo-100 prose-h1:pb-4 prose-h2:text-indigo-800 prose-h2:mt-10 prose-h3:text-indigo-700 prose-p:text-slate-700 prose-headings:font-bold font-serif prose-p:leading-relaxed prose-li:text-slate-700">
                         <ReactMarkdown
                            components={{
                                code({inline, className, children, ...props}: React.HTMLProps<HTMLElement> & { inline?: boolean }) {

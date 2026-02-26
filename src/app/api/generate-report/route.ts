@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 import { AI_CONFIG } from '../../../config/ai';
 
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const openrouterApiKey = process.env.OPENROUTER_API_KEY || '';
 
 let ai: GoogleGenAI | null = null;
 if (geminiApiKey) {
@@ -21,10 +20,10 @@ export async function POST(req: Request) {
     };
 
     let lengthInstruction = '';
-    if (settings.verbosity === 'short') lengthInstruction = 'Make the responses highly concise and brief. 1 to 2 paragraphs maximum per section.';
-    else if (settings.verbosity === 'long') lengthInstruction = 'Make the responses extraordinarily comprehensive and extensive. Write at least 6 to 8 lengthy paragraphs per section, exploring every minute architectural detail and theoretical aspect without summarizing.';
-    else if (settings.verbosity === 'exhaustive') lengthInstruction = 'Provide a massive, thesis-level exhaustive analysis. Each section MUST BE at least 1500 words. Leave no detail untouched. Over-explain architectures, provide theoretical backgrounds, write extensive paragraphs, and break down the JSON deeply.';
-    else lengthInstruction = 'Write a detailed and thorough response, aiming for 4 to 5 substantial paragraphs per section.';
+    if (settings.verbosity === 'short') lengthInstruction = 'CRITICAL LENGTH: Write exactly 1 paragraph per section. Be concise and straight to the point.';
+    else if (settings.verbosity === 'long') lengthInstruction = 'CRITICAL LENGTH: Write a highly extensive, comprehensive analysis. Each section MUST be 6 to 8 paragraphs. Deeply investigate all code elements. No summarizing. Expand fully.';
+    else if (settings.verbosity === 'exhaustive') lengthInstruction = 'CRITICAL LENGTH: Provide a massive, thesis-level exhaustive analysis. Each section MUST BE at least 1500 words. Explain everything in meticulous detail. Break down JSON completely.';
+    else lengthInstruction = 'Write a detailed response of about 3 to 4 paragraphs per section.';
 
     let toneInstruction = '';
     if (settings.tone === 'conversational') toneInstruction = 'Use a conversational, slightly casual, and highly accessible tone.';
@@ -32,37 +31,37 @@ export async function POST(req: Request) {
 
     let formatInstruction = '';
     if (settings.universityFormat === 'VTU') {
-        formatInstruction = `Generate a Visvesvaraya Technological University (VTU) project report strictly following these sections:
-- INTRODUCTION
-- PROBLEM STATEMENT
-- LITERATURE SURVEY
-- SYSTEM DESIGN
-- METHODOLOGY
-- IMPLEMENTATION DETAILS
-- ADVANTAGES AND DISADVANTAGES
-- CONCLUSION`;
+        formatInstruction = `Generate a Visvesvaraya Technological University (VTU) project report strictly following these exact Markdown headings:
+## INTRODUCTION
+## PROBLEM STATEMENT
+## LITERATURE SURVEY
+## SYSTEM DESIGN
+## METHODOLOGY
+## IMPLEMENTATION DETAILS
+## ADVANTAGES AND DISADVANTAGES
+## CONCLUSION`;
     } else if (settings.universityFormat === 'Generic') {
-        formatInstruction = `Generate a standard software project architecture report strictly following these sections:
-- Executive Summary
-- Architecture Overview
-- Core Modules
-- Technical Stack
-- Implementation Highlights
-- Security & Deployment`;
+        formatInstruction = `Generate a standard software project architecture report strictly following these exact Markdown headings:
+## Executive Summary
+## Architecture Overview
+## Core Modules
+## Technical Stack
+## Implementation Highlights
+## Security & Deployment`;
     } else {
-        formatInstruction = `Generate a Bangalore University BCA project report strictly following these sections:
-- ABOUT
-- EXISTING SYSTEM
-- Brief explanation of Existing System
-- Disadvantages of Existing System
-- PROPOSED SYSTEM
-- Objective Of The Proposed System
-- Brief explanation of Proposed System
-- Advantages of Proposed System
-- SYSTEM REQUIREMENTS
-- Requirement Analysis
-- Hardware Requirements
-- Software Requirements`;
+        formatInstruction = `Generate a Bangalore University BCA project report strictly following these exact Markdown headings:
+## ABOUT
+## EXISTING SYSTEM
+### Brief explanation of Existing System
+### Disadvantages of Existing System
+## PROPOSED SYSTEM
+### Objective Of The Proposed System
+### Brief explanation of Proposed System
+### Advantages of Proposed System
+## SYSTEM REQUIREMENTS
+### Requirement Analysis
+### Hardware Requirements
+### Software Requirements`;
     }
 
     const prompt = `
@@ -74,7 +73,8 @@ Constraints:
 - No bullet overuse (write in paragraphs)
 - No excessive technical jargon
 - Do not mention AI or that this was auto-generated
-- You MUST embed the following exact Mermaid diagram codeblock within the Architecture / Proposed System section:
+- You MUST embed the exact Mermaid diagram codeblock within the Architecture / Proposed System section. 
+IMPORTANT FORMAT FOR MERMAID: Do not wrap the code in HTML. Use standard Markdown fenced codeblocks like so:
 \`\`\`mermaid
 ${requestData.architectureDiagram || "graph TD\\n A[Entity] --> B[System]"}
 \`\`\`
@@ -91,104 +91,37 @@ ${JSON.stringify(requestData, null, 2)}
 
     const encoder = new TextEncoder();
 
-    if (!modelConfig || modelConfig.provider === 'gemini') {
-        if (!geminiApiKey || !ai) {
-             return new Response("Error: Gemini API key is not configured.", { status: 400 });
-        }
-        
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    const responseStream = await ai!.models.generateContentStream({
-                        model: (!modelConfig) ? targetModelId : AI_CONFIG.geminiDirect.model,
-                        contents: prompt,
-                        config: { temperature: AI_CONFIG.temperature }
-                    });
+    if (!geminiApiKey || !ai) {
+         return new Response("Error: Gemini API key is not configured.", { status: 400 });
+    }
+    
+    // Always use Gemini for now
+    const selectedModelStr = (!modelConfig || modelConfig.provider !== 'gemini') ? AI_CONFIG.geminiDirect.model : targetModelId;
 
-                    for await (const chunk of responseStream) {
-                        controller.enqueue(encoder.encode(chunk.text));
-                    }
-                } catch (err: unknown) {
-                    console.error("Gemini stream error", err);
-                    controller.enqueue(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
-                } finally {
-                    controller.close();
-                }
-            }
-        });
+    const stream = new ReadableStream({
+        async start(controller) {
+            try {
+                const responseStream = await ai!.models.generateContentStream({
+                    model: selectedModelStr,
+                    contents: prompt,
+                    config: { temperature: AI_CONFIG.temperature }
+                });
 
-        return new Response(stream, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-    } 
-    else if (modelConfig.provider === 'openrouter') {
-        if (!openrouterApiKey) {
-            return new Response("Error: OpenRouter API key is not configured.", { status: 400 });
-        }
-
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${openrouterApiKey}`,
-                            "HTTP-Referer": process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000",
-                            "X-Title": "AutoReport AI",
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            model: targetModelId,
-                            temperature: AI_CONFIG.temperature,
-                            stream: true,
-                            messages: [ { role: "user", content: prompt } ]
-                        })
-                    });
-
-                if (!response.ok) {
-                    throw new Error(`OpenRouter API responded with status: ${response.status}`);
-                }
-
-                if (!response.body) throw new Error("No response body returned from OpenRouter");
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunkText = decoder.decode(value, { stream: true });
-                    const lines = chunkText.split('\n');
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                                    controller.enqueue(encoder.encode(data.choices[0].delta.content));
-                                }
-                            } catch (e) {
-                                // Ignore broken JSON stream chunks
-                            }
-                        }
-                    }
+                for await (const chunk of responseStream) {
+                    controller.enqueue(encoder.encode(chunk.text));
                 }
             } catch (err: unknown) {
-                console.error("OpenRouter stream error", err);
+                console.error("Gemini stream error", err);
                 controller.enqueue(encoder.encode(`\n\n[Streaming Error]: ${(err as Error).message}`));
             } finally {
                 controller.close();
             }
         }
-        });
+    });
 
-        return new Response(stream, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-    }
-
-    return NextResponse.json({ error: 'Invalid model configuration' }, { status: 400 });
+    return new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
   } catch (error: unknown) {
     console.error('Error generating report:', error);
     return NextResponse.json({ error: (error as Error).message || 'Failed to generate report' }, { status: 500 });

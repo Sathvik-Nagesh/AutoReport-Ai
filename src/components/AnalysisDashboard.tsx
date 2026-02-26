@@ -19,7 +19,7 @@ export default function AnalysisDashboard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [data, setData] = useState<ProjectAnalysis>(analysis);
   const [settings, setSettings] = useState<ReportGenerationSettings>({
-      verbosity: 'medium',
+      verbosity: 'exhaustive',
       tone: 'formal',
       universityFormat: 'Bangalore University BCA'
   });
